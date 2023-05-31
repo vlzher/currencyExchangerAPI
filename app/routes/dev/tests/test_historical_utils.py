@@ -2,62 +2,45 @@ import pytest
 
 from app.routes.utils import historical_utils
 
-
-def test_historical_utils_success():
-    data = {
-        "success": True,
-        "quotes": {
-            "USDBYN": 2.523211,
-            "USDEUR": 0.928462,
-            "USDPLN": 4.177944
-        }
-    }
-
-    result = historical_utils(data)
-
-    assert result == {
-        "success": True,
-        "data": {
-            "USDBYN": 2.523211,
-            "USDEUR": 0.928462,
-            "USDPLN": 4.177944
-        }
-    }
+import pytest
 
 
-def test_historical_utils_missing_key():
-    data = {"success": True}
-
-    with pytest.raises(ValueError):
-        historical_utils(data)
+def test_historical_utils_with_empty_data():
+    with pytest.raises(ValueError, match="Missing required key"):
+        historical_utils({})
 
 
-def test_historical_utils_wrong_type():
-    data = {
-        "success": "True",
-        "quotes": {
-            "USDBYN": 2.523211,
-            "USDEUR": 0.928462,
-            "USDPLN": 4.177944
-        }
-    }
-    with pytest.raises(TypeError):
-        historical_utils(data)
+def test_historical_utils_with_missing_success_key():
+    with pytest.raises(ValueError, match="Missing required key"):
+        historical_utils({"quotes": {}})
 
 
-def test_historical_utils_not_dict():
-    data = "this is not a dictionary"
-    with pytest.raises(TypeError):
-        historical_utils(data)
+def test_historical_utils_with_missing_quotes_key():
+    with pytest.raises(ValueError, match="Missing required key"):
+        historical_utils({"success": True})
 
 
-def test_historical_utils_not_successful():
-    data = {
-        "success": False,
-        "quotes": {
-            "USDBYN": 2.523211,
-            "USDEUR": 0.928462,
-            "USDPLN": 4.177944
-        }
-    }
-    assert historical_utils(data) == {"success": False}
+def test_historical_utils_with_non_dict_data():
+    with pytest.raises(TypeError, match="Input data must be a dictionary"):
+        historical_utils("not a dict")
+
+
+def test_historical_utils_with_non_boolean_success_key():
+    with pytest.raises(TypeError, match="Key 'success' must be a boolean value"):
+        historical_utils({"success": 0, "quotes": {}})
+
+
+def test_historical_utils_with_non_dict_quotes_key():
+    with pytest.raises(TypeError, match="Key 'quotes' must be a dictionary"):
+        historical_utils({"success": True, "quotes": "not a dict"})
+
+
+def test_historical_utils_with_success_false():
+    assert historical_utils({"success": False, "quotes": {}}) == {"success": False}
+
+
+def test_historical_utils_with_success_true_and_empty_quotes():
+    result = historical_utils({"success": True, "quotes": {}})
+    assert result["success"] == True
+    assert result["data"] == {}
+

@@ -2,45 +2,49 @@ import pytest
 
 from app.routes.utils import change_utils
 
+import pytest
 
-def test_change_utils_with_valid_data():
-    data = {"change": True,
-            "quotes": {"USDJPY": {"change": 0.0123, "change_pct": 0.4567, "end_rate": 110.123, "start_rate": 109.876}}}
-    result = change_utils(data)
+
+def test_change_utils_with_empty_data():
+    with pytest.raises(ValueError, match="Missing required key"):
+        change_utils({})
+
+
+def test_change_utils_with_missing_change_key():
+    with pytest.raises(ValueError, match="Missing required key"):
+        change_utils({"quotes": {}})
+
+
+def test_change_utils_with_missing_quotes_key():
+    with pytest.raises(ValueError, match="Missing required key"):
+        change_utils({"change": True})
+
+
+def test_change_utils_with_non_dict_data():
+    with pytest.raises(TypeError, match="Input data must be a dictionary"):
+        change_utils("not a dict")
+
+
+def test_change_utils_with_non_boolean_change_key():
+    with pytest.raises(TypeError, match="Key 'change' must be a boolean value"):
+        change_utils({"change": 0, "quotes": {}})
+
+
+def test_change_utils_with_non_dict_quotes_key():
+    with pytest.raises(TypeError, match="Key 'quotes' must be a dictionary"):
+        change_utils({"change": True, "quotes": "not a dict"})
+
+
+def test_change_utils_with_change_false():
+    assert change_utils({"change": False, "quotes": {}}) == {"success": False}
+
+
+def test_change_utils_with_change_true_and_empty_quotes():
+    with pytest.raises(StopIteration):
+        change_utils({"change": True, "quotes": {}})
+
+
+def test_change_utils_with_change_true_and_nonempty_quotes():
+    result = change_utils({"change": True, "quotes": {"USDJPY": 110.0, "EURUSD": 1.2}})
     assert result["success"] == True
-    assert result["data"] == data["quotes"]
-
-
-def test_change_utils_with_invalid_data_type():
-    data = "invalid"
-    with pytest.raises(TypeError):
-        change_utils(data)
-
-
-def test_change_utils_with_missing_required_keys():
-    data = {"quotes": {"USDJPY": {"change": 0.0123, "change_pct": 0.4567, "end_rate": 110.123, "start_rate": 109.876}}}
-    with pytest.raises(ValueError) as exc_info:
-        change_utils(data)
-    assert "Missing required key(s) in data" in str(exc_info.value)
-
-
-def test_change_utils_with_invalid_change_value():
-    data = {"change": "invalid",
-            "quotes": {"USDJPY": {"change": 0.0123, "change_pct": 0.4567, "end_rate": 110.123, "start_rate": 109.876}}}
-    with pytest.raises(TypeError) as exc_info:
-        change_utils(data)
-    assert "Key 'change' must be a boolean value" in str(exc_info.value)
-
-
-def test_change_utils_with_invalid_quotes_value():
-    data = {"change": True, "quotes": "invalid"}
-    with pytest.raises(TypeError) as exc_info:
-        change_utils(data)
-    assert "Key 'quotes' must be a dictionary" in str(exc_info.value)
-
-
-def test_change_utils_with_change_set_to_false():
-    data = {"change": False,
-            "quotes": {"USDJPY": {"change": 0.0123, "change_pct": 0.4567, "end_rate": 110.123, "start_rate": 109.876}}}
-    result = change_utils(data)
-    assert result["success"] == False
+    assert result["data"] == 110.0

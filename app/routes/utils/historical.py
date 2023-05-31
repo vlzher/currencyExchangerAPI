@@ -12,7 +12,8 @@ def historical_utils(data):
     if not data["success"]:
         return {"success": False}
     else:
+        changed_data = {key[3:]: value for key, value in data['quotes'].items()}
         return {
             "success": True,
-            "data": data["quotes"]
+            "data": changed_data
         }

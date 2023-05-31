@@ -12,7 +12,8 @@ def change_utils(data):
     if not data["change"]:
         return {"success": False}
     else:
+        first_key = next(iter(data["quotes"]))
         return {
             "success": True,
-            "data": data["quotes"]
+            "data": data["quotes"][first_key]
         }
